@@ -15,15 +15,11 @@
 #endif
 
 volatile unsigned char TimerFlag = 0;
-unsigned char power = 0x00;
-unsigned char i = 0x00;
-double freq[8] = {261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25};
-
 
 unsigned long _avr_timer_M = 1;
 unsigned long _avr_timer_cntcurr = 0;
 
-enum states {start, init, poweronoff, scaleup, scaledown, release} state;
+enum states {start, init, cnote, dnote, enote} state;
 
 void TimerSet(unsigned long M) {
         _avr_timer_M = M;
@@ -88,50 +84,37 @@ void PMW_off() {
 }
 
 void sound_tick() {
-
 	switch (state) {
-		case(start):
+		case (start):
 			state = init;
 			break;
-		case(init):
+		case (init):
 			if ((~PINA & 0x07) == 0x01) {
-				state = poweronoff;
+				state = cnote;
 			} else if ((~PINA & 0x07) == 0x02) {
-				state = scaleup;
+				state = dnote;
 			} else if ((~PINA & 0x07) == 0x04) {
-				state = scaledown;
+				state = enote;
 			} else {
 				state = init;
 			} break;
-		case(poweronoff):
-			/*if ((~PINA & 0x07) == 0x01) {
-				state = poweronoff;
+		case (cnote):
+			if ((~PINA & 0x07) == 0x01) {
+				state = cnote;
 			} else {
-				state = release;
-			} break;*/
-			state = release;
-			break;
-		case(scaleup):
-			/*if ((~PINA & 0x07) == 0x02) {
-				state = scaleup;
-			} else {
-				state = release;
-			} break;*/
-			state = release;
-			break;
-		case(scaledown):
-			/*if ((~PINA & 0x07) == 0x04) {
-				state = scaledown;
-			} else {
-				state = release;
-			} break;*/
-			state = release;
-			break;
-		case(release):
-			if ((~PINA & 0x07) == 0x00) {
 				state = init;
+			} break;
+		case (dnote):
+			if ((~PINA & 0x07) == 0x02) {
+				state = dnote;
 			} else {
-				state = release;
+				state = init;
+			} break;
+		case (enote):
+			if ((~PINA & 0x07) == 0x04) {
+				state = enote;
+			} else {
+				state = init;
 			} break;
 		default:
 			state = start;
@@ -139,52 +122,41 @@ void sound_tick() {
 	}
 
 	switch(state) {
-		case(start):
-			break;
-		case(init):
-			break;
-		case(poweronoff):
-			if (power == 0x00) {
-				power = 0x01;
-			} else {
-				power = 0x00;
+			case start: break;
+			case init:
 				set_PWM(0);
-			} break;
-		case(scaleup):
-			if (i < 0x07) {
-				++i;
-			}
-			if (power == 0x01) {
-				set_PWM(freq[i]);
-			}
-			break;
-		case(scaledown):
-                        if (i > 0x00) {
-                                --i;
-                        }
-                        if (power == 0x01) {
-                                set_PWM(freq[i]);
-                        } break;
-		case(release):
-			break;
-		default:
-			break;
+				break;
+			case cnote:
+				set_PWM(261.63);
+				break;
+			case dnote:
+				set_PWM(293.66);
+				break;
+			case enote:
+				set_PWM(329.63);
+				break;
+			default:
+				set_PWM(0);
+				break;
 	}
 }
-
-
 
 int main(void) {
 	DDRA = 0x00; PORTA = 0xFF;
 	DDRB = 0xFF; PORTB = 0x00;
-	TimerSet(25);
+	TimerSet(50);
 	TimerOn();
 	PWM_on();
 	while(1) {
 		sound_tick();
-		while(!TimerFlag){}
+		while(!TimerFlag){};
 		TimerFlag = 0;
 	}
-	return 0;
+	return 1;
 }
+
+
+
+
+
 
