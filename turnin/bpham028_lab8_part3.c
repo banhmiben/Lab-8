@@ -1,11 +1,13 @@
 /*	Author: lab
  *  Partner(s) Name: 
  *	Lab Section:
- *	Assignment: Lab #  Exercise #
+ *	Assignment: Lab #8  Exercise #3
  *	Exercise Description: [optional - include for your own benefit]
  *
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
+ *
+ *	Demo Link: https://youtu.be/DrDJ1WBDRDw
  */
 
 #include <avr/io.h>
